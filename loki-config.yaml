@@ -1,5 +1,5 @@
 
-# This is a complete configuration to deploy Loki backed by the filesystem.
+# This is a complete configuration to deploy Loki backed by S3`
 # The index will be shipped to the storage via tsdb-shipper.
 
 auth_enabled: false

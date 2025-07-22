@@ -23,8 +23,9 @@ query_frontend:
   trace_by_id:
     duration_slo: 100ms
   
+
 distributor:
-  receivers:    
+  receivers:     
     otlp:
       protocols:
         grpc:
@@ -32,12 +33,13 @@ distributor:
         http:
           endpoint: "0.0.0.0:4318"
     
+
 storage:
   trace:
     backend: s3
     s3:
-      bucket: ${TEMPO_BUCKET_NAME}
-      endpoint: ${S3_ENDPOINT}  
+      bucket: ${BUCKET_NAME}
+      endpoint: ${S3_ENDPOINT_TRIMMED}  
       access_key: ${S3_ACCESS_KEY_ID}
       secret_key: ${S3_SECRET_ACCESS_KEY}
       insecure: false

@@ -1,60 +1,30 @@
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-  scrape_timeout: 10s
-
 remote_write:
   - url: http://mimir:9009/api/v1/push
-
-# Alertmanager configuration
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets:
-          # - alertmanager:9093
-
-# Rule files to load
-rule_files:
-  # - "first_rules.yml"
-
+global:
+  scrape_interval: 15s
+# http://mimir:9009/prometheus
 scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-
-  - job_name: 'cadvisor'
-    dns_sd_configs:
-      - names:
-          - 'tasks.cadvisor'
-        type: 'A'
-        port: 8080
-
-  - job_name: 'otel-collector'
-    scrape_interval: 5s
-    static_configs:
-      - targets: ['otel-collector:8889']
-
   - job_name: "mimir"
     honor_labels: true
     static_configs:
       - targets: ["mimir:9009"]
-
+  - job_name: "prometheus-self"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['prometheus:9090']
+  - job_name: "app"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["host.docker.internal:5005"]
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+    - targets: ["cadvisor:8080"]
   - job_name: loki
     scrape_interval: 5s
     static_configs:
     - targets: ["loki:3100"]
-    
   - job_name: grafana
     scrape_interval: 5s
     static_configs:
     - targets: ["grafana:3000"]
-  
-  - job_name: backend
-    scrape_interval: 5s
-    static_configs:
-    - targets: ["${BACKEND_HOST}:${BACKEND_PORT}"]
-  
-  - job_name: broker
-    scrape_interval: 5s
-    static_configs:
-    - targets: ["${BROKER_HOST}:${BROKER_PORT}"]
