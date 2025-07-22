@@ -1,0 +1,60 @@
+multitenancy_enabled: false
+
+blocks_storage:
+  backend: s3
+  s3:
+    bucket_name: ${MIMIR_BLOCK_PATH}
+    endpoint: ${S3_ENDPOINT}
+    region: ${AWS_REGION}
+    access_key_id: ${AWS_ACCESS_KEY_ID}
+    secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+  tsdb:
+    dir: /data/tsdb  # local scratch space
+  bucket_store:
+    sync_dir: /data/tsdb-sync  # local scratch space
+
+ruler_storage:
+  backend: s3
+  s3:
+    bucket_name: ${MIMIR_RULER_PATH}
+    endpoint: ${S3_ENDPOINT}
+    region: ${AWS_REGION}
+    access_key_id: ${AWS_ACCESS_KEY_ID}
+    secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+compactor:
+  data_dir: /data/compactor
+  sharding_ring:
+    kvstore:
+      store: memberlist
+
+distributor:
+  ring:
+    instance_addr: 0.0.0.0
+    kvstore:
+      store: memberlist
+
+ingester:
+  ring:
+    instance_addr: 0.0.0.0
+    kvstore:
+      store: memberlist
+    replication_factor: 1  # increase to 3 for HA in future
+  
+
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
+    kvstore:
+      store: memberlist
+
+server:
+  http_listen_port: 9009
+  log_level: info
+
+limits:
+  ingestion_rate: 1000000
+  ingestion_burst_size: 2000000
+  max_label_names_per_series: 50
+
+frontend:
+  log_queries_longer_than: 5s

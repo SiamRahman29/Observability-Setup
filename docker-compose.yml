@@ -1,0 +1,219 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector:0.121.0
+    configs:
+      - source: otel-config
+        target: /etc/otel/config.yaml
+    command:
+      - '--config=/etc/otel/config.yaml'
+    networks:
+      - askturing_overlay
+      - preview_overlay
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.server == management
+
+  loki:
+    image: grafana/loki:3.4.2
+    configs:
+      - source: loki-config
+        target: /etc/loki/local-config.yaml
+    command: 
+      -config.file=/etc/loki/local-config.yaml
+      -config.expand-env=true
+    environment:
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      AWS_REGION: ${AWS_REGION}
+      BUCKET_NAME: ${LOKI_BUCKET_NAME}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - askturing_overlay
+      - preview_overlay
+    volumes:
+      - loki-data:/loki
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.server == management
+
+  grafana:
+    image: grafana/grafana:11.5.0
+    environment:
+      - GF_AUTH_BASIC_ENABLED=true
+      - GF_FEATURE_TOGGLES_ENABLE=accessControlOnCall
+      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - askturing_overlay
+      - preview_overlay
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.server == management
+      labels:
+        - "traefik.enable=true"
+        - "traefik.constraint-label=askturing_overlay"
+        - "traefik.docker.network=askturing_overlay"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+        - "traefik.http.routers.grafana-http.rule=Host(`grafana.askturing.ai`)"
+        - "traefik.http.routers.grafana-http.entrypoints=http"
+        - "traefik.http.routers.grafana-http.middlewares=https-redirect"
+        - "traefik.http.routers.grafana-https.rule=Host(`grafana.askturing.ai`)"
+        - "traefik.http.routers.grafana-https.entrypoints=https"
+        - "traefik.http.routers.grafana-https.tls=true"
+        - "traefik.http.routers.grafana-https.tls.certresolver=le"
+
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    environment:
+      BACKEND_HOST: ${BACKEND_HOST}
+      BACKEND_PORT: ${BACKEND_PORT}
+      BROKER_HOST: ${BROKER_HOST}
+      BROKER_PORT: ${BROKER_PORT}
+    configs:
+      - source: prometheus-config
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - prometheus-data:/prometheus
+    networks:
+      - askturing_overlay
+      - preview_overlay
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.server == management
+  mimir:
+    image: grafana/mimir:2.16.0
+    configs:
+      - source: mimir-config
+        target: /etc/mimir/mimir-config.yml
+    command:
+      - --config.file=/etc/mimir/mimir-config.yml
+      - -config.expand-env=true
+    environment:
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      AWS_REGION: ${AWS_REGION}
+      MIMIR_BLOCK_PATH: ${MIMIR_BLOCK_BUCKET_NAME}
+      MIMIR_RULER_PATH: ${MIMIR_RULER_BUCKET_NAME}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      - mimir-data:/data
+    networks:
+      - askturing_overlay
+      - preview_overlay
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.server == management
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    command: -logtostderr -docker_only
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - askturing_overlay
+      - preview_overlay
+
+  memcached:
+    image: memcached:1.6.29
+    environment:
+      - MEMCACHED_MAX_MEMORY=64m
+      - MEMCACHED_THREADS=4
+    networks:
+      - askturing_overlay
+      - preview_overlay    
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.server == management
+    
+  tempo:
+    image: grafana/tempo:main-a4289d9
+    configs:
+      - source: tempo-config
+        target: /etc/tempo/tempo-config.yaml
+    command: 
+      - "--config.file=/etc/tempo/tempo-config.yaml"
+      - "--config.expand-env=true"
+    environment:
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      TEMPO_BUCKET_NAME: ${TEMPO_BUCKET_NAME}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      - tempo-data:/tmp/tempo
+    networks:
+      - askturing_overlay
+      - preview_overlay    
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.server == management  
+
+configs:
+  otel-config:
+    external: true
+  loki-config:
+    external: true
+  prometheus-config:
+    external: true
+  mimir-config:
+    external: true
+  tempo-config:
+    external: true
+
+volumes:
+  loki-data:
+  grafana-data:
+  prometheus-data:
+  mimir-data:
+  tempo-data:
+
+networks:
+  preview_overlay:
+    external: true
+  askturing_overlay:
+    external: true
