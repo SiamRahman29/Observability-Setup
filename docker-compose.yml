@@ -61,10 +61,10 @@ services:
     
   grafana:
     image: grafana/grafana:11.5.0
-    logging:
-      driver: loki
-      options:
-        loki-url: ${LOKI_URL}
+    #logging:
+    #  driver: loki
+    #  options:
+    #    loki-url: ${LOKI_URL}
     environment:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
@@ -78,12 +78,12 @@ services:
     
   prometheus:
     image: prom/prometheus:v2.52.0
-    logging:
-      driver: loki
-      options:
-        loki-url: ${LOKI_URL}
+    #logging:
+    #  driver: loki
+    #  options:
+    #    loki-url: ${LOKI_URL}
     ports:
-      - "9090:9090"
+      - "9092:9092"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
@@ -94,10 +94,10 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    logging:
-      driver: loki
-      options:
-        loki-url: ${LOKI_URL}
+    #logging:
+    #  driver: loki
+    #  options:
+    #    loki-url: ${LOKI_URL}
     ports:
       - 8080:8080
     volumes:
@@ -111,10 +111,10 @@ services:
   redis:
     image: redis:latest
     container_name: redis
-    logging:
-      driver: loki
-      options:
-        loki-url: ${LOKI_URL}
+    #logging:
+    #  driver: loki
+    #  options:
+    #    loki-url: ${LOKI_URL}
     ports:
       - 6389:6389
   #tempo-init:
@@ -145,7 +145,7 @@ services:
       - "-config.expand-env=true"
     volumes:
       - ./tempo.yaml:/etc/tempo/tempo-config.yaml
-    #  - tempo-data:/var/tempo
+      - tempo-data:/var/tempo
     environment:
       S3_ENDPOINT_TRIMMED: ${S3_ENDPOINT_TRIMMED}
       AWS_REGION: ${AWS_REGION}
