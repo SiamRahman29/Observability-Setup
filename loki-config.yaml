@@ -39,7 +39,8 @@ storage_config:
     bucketnames: ${BUCKET_NAME}
     access_key_id: ${AWS_ACCESS_KEY_ID}
     secret_access_key: ${AWS_SECRET_ACCESS_KEY}
-    insecure: false
+    insecure: true
+    s3forcepathstyle: true
 
 pattern_ingester:
   enabled: true

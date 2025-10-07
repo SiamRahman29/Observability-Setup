@@ -4,10 +4,11 @@ blocks_storage:
   backend: s3
   s3:
     bucket_name: ${BUCKET_NAME}
-    endpoint: s3.ap-south-1.amazonaws.com
+    endpoint: minio:9000
     region: ${AWS_REGION}
     access_key_id: ${AWS_ACCESS_KEY_ID}
     secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+    insecure: true
   tsdb:
     dir: /data/tsdb  # local scratch space
   bucket_store:
@@ -17,10 +18,11 @@ ruler_storage:
   backend: s3
   s3:
     bucket_name: ${EXTRA_BUCKET_NAME}
-    endpoint: s3.ap-south-1.amazonaws.com
+    endpoint: minio:9000
     region: ${AWS_REGION}
     access_key_id: ${AWS_ACCESS_KEY_ID}
     secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+    insecure: true
 compactor:
   data_dir: /data/compactor
   sharding_ring:
