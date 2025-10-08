@@ -105,11 +105,13 @@ services:
     #  options:
     #    loki-url: ${LOKI_URL}
     ports:
-      - "9092:9092"
+      - "9092:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - loki
     

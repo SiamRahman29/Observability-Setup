@@ -11,11 +11,11 @@ scrape_configs:
   - job_name: "prometheus-self"
     scrape_interval: 10s
     static_configs:
-      - targets: ['prometheus:9092']
+      - targets: ['prometheus:9090']
   - job_name: "app"
     scrape_interval: 10s
     static_configs:
-      - targets: ["host.docker.internal:5005"]
+      - targets: ["host.docker.internal:8000"]
   - job_name: cadvisor
     scrape_interval: 5s
     static_configs:
